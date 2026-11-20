@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="theme-color" content="#f6f5f2" />
+<title>油价对比计算器</title>
+<style>
+:root{
+  --bg:#f6f5f2;
+  --card:#ffffff;
+  --line:#e5e2db;
+  --line-strong:#d2cec4;
+  --text:#17181a;
+  --muted:#7a756c;
+  --faint:#a8a29a;
+  --accent:#0b5fd7;
+  --accent-soft:#ecf2fd;
+  --good:#0a7a45;
+  --bad:#c0392b;
+  --radius:16px;
+  --shadow:0 1px 2px rgba(20,18,14,.04),0 10px 26px -18px rgba(20,18,14,.22);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1012;
+    --card:#17191c;
+    --line:#2b2e33;
+    --line-strong:#3d4148;
+    --text:#e9e7e2;
+    --muted:#98938a;
+    --faint:#6d6862;
+    --accent:#5b93f7;
+    --accent-soft:#16233a;
+    --good:#3edc9a;
+    --bad:#ff6f61;
+    --shadow:none;
+  }
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  font-size:15px;
+  line-height:1.55;
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;appearance:textfield;}
+
+.wrap{max-width:1000px;margin:0 auto;padding:34px 20px 72px;}
+.title{font-size:26px;font-weight:650;letter-spacing:-.02em;margin:0;}
+.desc{margin:7px 0 0;color:var(--muted);font-size:13.5px;}
+
+.base{
+  display:grid;grid-template-columns:1fr 1fr;gap:22px;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;margin-top:22px;box-shadow:var(--shadow);
+}
+@media(max-width:620px){.base{grid-template-columns:1fr;gap:18px;padding:18px;}}
+.field-label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:6px;}
+.input-wrap{display:flex;align-items:baseline;border-bottom:1px solid var(--line-strong);padding-bottom:7px;}
+.input-wrap input{
+  flex:1;min-width:0;width:100%;border:0;background:transparent;
+  font:inherit;font-size:24px;font-weight:650;letter-spacing:-.01em;
+  color:var(--text);outline:none;
+}
+.input-wrap input:focus{border-color:var(--accent);}
+.input-wrap .unit{font-size:12.5px;color:var(--muted);margin-left:8px;white-space:nowrap;}
+.input-wrap:focus-within{border-bottom-color:var(--accent);}
+.chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.chip{
+  padding:5px 13px;border-radius:999px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);font:inherit;font-size:12.5px;cursor:pointer;
+}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+
+.summary{
+  margin-top:16px;border-radius:12px;padding:13px 17px;
+  background:var(--accent-soft);border:1px solid transparent;
+}
+.summary .main{font-size:14px;font-weight:600;}
+.summary .sub{font-size:12.5px;color:var(--muted);margin-top:3px;}
+
+.grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:14px;margin-top:14px;align-items:start;
+}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 16px 14px;display:flex;flex-direction:column;gap:11px;
+  box-shadow:var(--shadow);transition:border-color .18s;
+}
+.card.best{border-color:var(--accent);}
+
+.head{display:flex;align-items:center;gap:8px;}
+.name{
+  flex:1;min-width:0;border:0;background:transparent;
+  font:inherit;font-size:15px;font-weight:650;color:var(--text);
+  outline:none;padding:2px 0;border-bottom:1px solid transparent;
+}
+.name:focus{border-bottom-color:var(--line-strong);}
+.badge{
+  font-size:11px;padding:3px 8px;border-radius:999px;
+  background:var(--accent-soft);color:var(--accent);font-weight:650;white-space:nowrap;
+}
+.badge[hidden]{display:none;}
+.del{
+  border:0;background:transparent;color:var(--faint);font-size:16px;
+  cursor:pointer;padding:2px 6px;line-height:1;border-radius:7px;
+}
+.del:hover{color:var(--bad);}
+
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:2px;}
+.seg button{
+  flex:1;border:0;background:transparent;color:var(--muted);
+  font:inherit;font-size:12.5px;padding:6px 0;border-radius:8px;cursor:pointer;
+}
+.seg button.on{background:var(--card);color:var(--text);font-weight:650;box-shadow:0 1px 2px rgba(20,18,14,.08);}
+
+.params{display:flex;flex-direction:column;gap:2px;}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:3px 0;}
+.row-label{font-size:13px;color:var(--muted);}
+.row-input{display:flex;align-items:baseline;gap:5px;}
+.row-input input{
+  width:88px;text-align:right;border:1px solid var(--line);background:var(--bg);
+  color:var(--text);border-radius:8px;padding:5px 8px;
+  font:inherit;font-size:13.5px;outline:none;
+}
+.row-input input:focus{border-color:var(--accent);background:var(--card);}
+.row-input input::placeholder{color:var(--faint);font-size:12px;}
+.row-input .unit{font-size:11.5px;color:var(--faint);width:32px;}
+
+.result{border-top:1px solid var(--line);padding-top:12px;margin-top:2px;}
+.pay-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+.pay-label{font-size:12.5px;color:var(--muted);}
+.pay{font-size:30px;font-weight:680;letter-spacing:-.025em;line-height:1.2;}
+.meta{font-size:12px;color:var(--muted);margin-top:1px;}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.stat{background:var(--bg);border-radius:10px;padding:8px 10px;}
+.stat .k{font-size:11.5px;color:var(--muted);display:block;margin-bottom:1px;}
+.stat .vline{display:flex;align-items:baseline;gap:3px;}
+.stat .v{font-size:17px;font-weight:650;letter-spacing:-.01em;}
+.stat .u{font-size:11px;color:var(--faint);}
+.good{color:var(--good);}
+.bad{color:var(--bad);}
+
+.pct{font-size:12px;color:var(--muted);margin-top:9px;}
+
+details{border-top:1px dashed var(--line);padding-top:10px;margin-top:2px;}
+summary{
+  cursor:pointer;font-size:12.5px;color:var(--muted);
+  list-style:none;display:flex;align-items:center;gap:5px;outline:none;
+}
+summary::-webkit-details-marker{display:none;}
+summary::before{content:"›";display:inline-block;transition:transform .18s;}
+details[open] summary::before{transform:rotate(90deg);}
+.eqs{padding:6px 0 2px;}
+.eq{font-size:12px;color:var(--muted);padding:2px 0;}
+
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.btn{
+  border:1px solid var(--line-strong);background:var(--card);color:var(--text);
+  border-radius:10px;padding:8px 15px;font:inherit;font-size:13px;cursor:pointer;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.ghost{color:var(--muted);border-color:var(--line);}
+.btn.ghost:hover{color:var(--bad);border-color:var(--bad);}
+
+.notes{margin-top:34px;color:var(--muted);font-size:12.5px;line-height:1.75;border-top:1px solid var(--line);padding-top:20px;}
+.notes h2{font-size:13px;color:var(--text);font-weight:650;margin:0 0 8px;}
+.notes p{margin:0 0 10px;}
+.notes .k{color:var(--text);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="title">油价对比计算器</h1>
+    <p class="desc">同一个加油需求，比出各渠道真实实付与平均单价</p>
+  </header>
+
+  <section class="base">
+    <div>
+      <label class="field-label" for="price">汽油原价（元/升）</label>
+      <div class="input-wrap">
+        <input id="price" type="number" step="any" inputmode="decimal" />
+        <span class="unit">元/L</span>
+      </div>
+    </div>
+    <div>
+      <label class="field-label" for="amount">加油金额（元）</label>
+      <div class="input-wrap">
+        <input id="amount" type="number" step="any" inputmode="decimal" />
+        <span class="unit">元</span>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+  </section>
+
+  <div class="summary" id="summary"></div>
+
+  <section class="grid" id="grid"></section>
+
+  <div class="actions">
+    <button class="btn" id="addBtn">＋ 添加渠道</button>
+    <button class="btn ghost" id="resetBtn">恢复默认</button>
+  </div>
+
+  <div class="notes">
+    <h2>计价逻辑</h2>
+    <p><span class="k">立减型（如平安好车主）</span>：升数 = 加油金额 ÷ 原价；实付 = 加油金额 − 优惠金额；平均单价 = 实付 ÷ 升数。</p>
+    <p><span class="k">每升优惠型（如小景美孚）</span>：升数 = 加油金额 ÷ 原价；毛优惠 = 升数 × 每升优惠；服务费 = max(最低服务费, 毛优惠 × 服务费率)；净优惠 = 毛优惠 − 服务费；实付 = 加油金额 − 净优惠。</p>
+    <p>升数按“金额 ÷ 单价”四舍五入到 0.01 L 计算，用于估算，与油机实际显示可能相差几分钱。所有参数只保存在本机浏览器，不上传。</p>
+  </div>
+</div>
+
+<script>
+/* ===== 状态 ===== */
+const KEY = 'oilcalc.v1';
+const cardRefs = {};
+let state = null;
+let focusAfterBuild = null;
+
+const uid = () => 'c' + Math.random().toString(36).slice(2, 8);
+const r2 = n => Math.round(n * 100) / 100;
+const f2 = n => n.toFixed(2);
+const f3 = n => n.toFixed(3);
+const num = v => { const n = parseFloat(v); return Number.isFinite(n) && n > 0 ? n : 0; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function defaults() {
+  return {
+    price: 9.09,
+    amount: 400,
+    channels: [
+      { id: uid(), name: '平安好车主', mode: 'cash', cash: 28.11, perLiter: 0.8, feeRate: 0, minFee: 0, amount: null },
+      { id: uid(), name: '小景美孚', mode: 'perLiter', cash: 20, perLiter: 0.8, feeRate: 9.7, minFee: 1, amount: null }
+    ]
+  };
+}
+
+function norm(ch) {
+  return {
+    id: ch.id || uid(),
+    name: ch.name || '未命名渠道',
+    mode: ch.mode === 'cash' ? 'cash' : 'perLiter',
+    cash: num(ch.cash),
+    perLiter: num(ch.perLiter),
+    feeRate: num(ch.feeRate),
+    minFee: num(ch.minFee),
+    amount: (ch.amount === null || ch.amount === undefined || ch.amount === '') ? null : num(ch.amount)
+  };
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      state = {
+        price: num(d.price) || 9.09,
+        amount: num(d.amount) || 400,
+        channels: Array.isArray(d.channels) ? d.channels.map(norm) : defaults().channels
+      };
+      return;
+    }
+  } catch (e) { /* 忽略损坏的缓存 */ }
+  state = defaults();
+}
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* 隐私模式忽略 */ }
+}
+
+/* ===== 计算 ===== */
+function compute(ch) {
+  const price = state.price > 0 ? state.price : 0;
+  const amount = (ch.amount != null && ch.amount > 0) ? ch.amount : state.amount;
+  const liters = price > 0 ? r2(amount / price) : 0;
+
+  let gross = 0, fee = 0, net = 0;
+  if (ch.mode === 'cash') {
+    gross = r2(Math.min(ch.cash, amount));
+    fee = 0;
+    net = gross;
+  } else {
+    gross = r2(liters * ch.perLiter);
+    fee = r2(Math.max(ch.minFee, gross * ch.feeRate / 100));
+    net = Math.min(r2(gross - fee), amount);
+  }
+
+  const pay = Math.max(0, r2(amount - net));
+  const unit = liters > 0 ? pay / liters : 0;
+  const savePerL = price - unit;
+  const savePct = price > 0 ? savePerL / price * 100 : 0;
+
+  return {
+    amount, price, liters, gross, fee, net, pay, unit, savePerL, savePct,
+    hasFee: ch.mode === 'perLiter' && ((ch.feeRate > 0) || (ch.minFee > 0))
+  };
+}
+
+const signed = v => v >= 0 ? '− ' + f2(v) : '+ ' + f2(-v);
+
+function formulaHTML(ch, r) {
+  const lines = [];
+  lines.push(`升数 = ${f2(r.amount)} ÷ ${f2(r.price)} = ${f2(r.liters)} L`);
+  if (ch.mode === 'cash') {
+    lines.push(`优惠金额 = ${f2(r.net)} 元${r.net < ch.cash ? '（不超过加油金额）' : ''}`);
+    lines.push(`实付 = ${f2(r.amount)} ${signed(r.net)} = ${f2(r.pay)} 元`);
+  } else {
+    lines.push(`毛优惠 = ${f2(r.liters)} × ${f2(ch.perLiter)} = ${f2(r.gross)} 元`);
+    if (r.hasFee) {
+      lines.push(`服务费 = max(${f2(ch.minFee)}, ${f2(r.gross)} × ${ch.feeRate}%) = ${f2(r.fee)} 元`);
+      lines.push(`净优惠 = ${f2(r.gross)} − ${f2(r.fee)} = ${f2(r.net)} 元`);
+    } else {
+      lines.push(`净优惠 = ${f2(r.net)} 元`);
+    }
+    lines.push(`实付 = ${f2(r.amount)} ${signed(r.net)} = ${f2(r.pay)} 元`);
+  }
+  lines.push(`平均单价 = ${f2(r.pay)} ÷ ${f2(r.liters)} = ${f3(r.unit)} 元/L`);
+  return lines.map(t => `<div class="eq">${esc(t)}</div>`).join('');
+}
+
+/* ===== 组件 ===== */
+function numRow(label, unit, value, onChange, placeholder) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const lab = document.createElement('label');
+  lab.className = 'row-label';
+  lab.textContent = label;
+  const box = document.createElement('div');
+  box.className = 'row-input';
+  const inp = document.createElement('input');
+  inp.type = 'number';
+  inp.step = 'any';
+  inp.inputMode = 'decimal';
+  inp.setAttribute('aria-label', label);
+  if (value !== null && value !== undefined) inp.value = value;
+  if (placeholder) inp.placeholder = placeholder;
+  inp.addEventListener('input', () => {
+    const raw = inp.value.trim();
+    onChange(raw === '' ? null : num(raw));
+  });
+  const u = document.createElement('span');
+  u.className = 'unit';
+  u.textContent = unit;
+  box.append(inp, u);
+  row.append(lab, box);
+  return row;
+}
+
+function statBlock(label, valueUnit) {
+  const wrap = document.createElement('div');
+  wrap.className = 'stat';
+  const k = document.createElement('span');
+  k.className = 'k';
+  k.textContent = label;
+  const vline = document.createElement('div');
+  vline.className = 'vline';
+  const v = document.createElement('span');
+  v.className = 'v';
+  const u = document.createElement('span');
+  u.className = 'u';
+  u.textContent = valueUnit;
+  vline.append(v, u);
+  wrap.append(k, vline);
+  return { el: wrap, k, v };
+}
+
+/* ===== 卡片 ===== */
+function buildCard(ch) {
+  const card = document.createElement('article');
+  card.className = 'card';
+
+  const head = document.createElement('div');
+  head.className = 'head';
+  const nameInput = document.createElement('input');
+  nameInput.className = 'name';
+  nameInput.value = ch.name;
+  nameInput.setAttribute('aria-label', '渠道名称');
+  nameInput.addEventListener('input', () => {
+    ch.name = nameInput.value.trim() || '未命名渠道';
+    save();
+    refresh();
+  });
+  const badge = document.createElement('span');
+  badge.className = 'badge';
+  badge.textContent = '单价最低';
+  badge.hidden = true;
+  const del = document.createElement('button');
+  del.className = 'del';
+  del.type = 'button';
+  del.textContent = '×';
+  del.title = '删除渠道';
+  del.addEventListener('click', () => {
+    if (!confirm(`删除渠道「${ch.name}」？`)) return;
+    state.channels = state.channels.filter(c => c.id !== ch.id);
+    save();
+    buildAll();
+  });
+  head.append(nameInput, badge, del);
+
+  const seg = document.createElement('div');
+  seg.className = 'seg';
+  [['cash', '立减金额'], ['perLiter', '每升优惠']].forEach(([m, label]) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    if (ch.mode === m) b.classList.add('on');
+    b.addEventListener('click', () => {
+      if (ch.mode === m) return;
+      ch.mode = m;
+      save();
+      buildAll();
+    });
+    seg.appendChild(b);
+  });
+
+  const params = document.createElement('div');
+  params.className = 'params';
+  if (ch.mode === 'cash') {
+    params.appendChild(numRow('优惠金额', '元', ch.cash, v => { ch.cash = v || 0; save(); refresh(); }));
+  } else {
+    params.appendChild(numRow('每升优惠', '元/L', ch.perLiter, v => { ch.perLiter = v || 0; save(); refresh(); }));
+    params.appendChild(numRow('服务费率', '%', ch.feeRate, v => { ch.feeRate = v || 0; save(); refresh(); }));
+    params.appendChild(numRow('最低服务费', '元', ch.minFee, v => { ch.minFee = v || 0; save(); refresh(); }));
+  }
+  const amountInput = numRow('加油金额', '元', ch.amount, v => { ch.amount = v; save(); refresh(); }, '跟随 ' + f2(state.amount)).querySelector('input');
+  amountInput.title = '留空则跟随顶部总金额';
+  params.appendChild(amountInput.parentElement.parentElement);
+
+  const result = document.createElement('div');
+  result.className = 'result';
+
+  const payRow = document.createElement('div');
+  payRow.className = 'pay-row';
+  const payLabel = document.createElement('div');
+  payLabel.className = 'pay-label';
+  payLabel.textContent = '实付金额';
+  const pay = document.createElement('div');
+  pay.className = 'pay';
+  payRow.append(payLabel, pay);
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+
+  const stats = document.createElement('div');
+  stats.className = 'stats';
+  const s1 = statBlock('平均单价', '元/L');
+  const s2 = statBlock('每升省', '元/L');
+  stats.append(s1.el, s2.el);
+
+  const pct = document.createElement('div');
+  pct.className = 'pct';
+
+  result.append(payRow, meta, stats, pct);
+
+  const det = document.createElement('details');
+  const sumTag = document.createElement('summary');
+  sumTag.textContent = '计算过程';
+  const eqs = document.createElement('div');
+  eqs.className = 'eqs';
+  det.append(sumTag, eqs);
+
+  card.append(head, seg, params, result, det);
+
+  cardRefs[ch.id] = {
+    card, badge, pay, meta, unit: s1.v, perL: s2.v, perLLabel: s2.k, pct, eqs, amountInput, nameInput
+  };
+  return card;
+}
+
+/* ===== 刷新 ===== */
+function refresh() {
+  const rows = [];
+
+  state.channels.forEach(ch => {
+    const r = compute(ch);
+    rows.push({ ch, r });
+    const el = cardRefs[ch.id];
+    if (!el) return;
+
+    el.pay.textContent = '¥' + f2(r.pay);
+    el.meta.textContent = `加油 ${f2(r.liters)} L · 原价 ${f2(r.price)} 元/L`;
+    el.unit.textContent = f3(r.unit);
+    el.perL.textContent = Math.abs(r.savePerL).toFixed(3);
+    el.perL.className = 'v ' + (r.savePerL >= 0 ? 'good' : 'bad');
+    el.perLLabel.textContent = r.savePerL >= 0 ? '每升省' : '每升多付';
+    el.pct.textContent = (r.savePct >= 0 ? '较原价省 ' : '较原价多付 ') + Math.abs(r.savePct).toFixed(2) + '%';
+    el.eqs.innerHTML = formulaHTML(ch, r);
+    el.amountInput.placeholder = '跟随 ' + f2(state.amount);
+  });
+
+  let bestUnit = Infinity;
+  rows.forEach(x => { if (x.r.unit < bestUnit) bestUnit = x.r.unit; });
+
+  rows.forEach(x => {
+    const el = cardRefs[x.ch.id];
+    if (!el) return;
+    const isBest = rows.length > 1 && Math.abs(x.r.unit - bestUnit) < 1e-9;
+    el.badge.hidden = !isBest;
+    el.card.classList.toggle('best', isBest);
+  });
+
+  renderSummary(rows);
+}
+
+function renderSummary(rows) {
+  const box = document.getElementById('summary');
+  if (!rows.length) {
+    box.innerHTML = '<div class="main">还没有渠道，先添加一个</div>';
+    return;
+  }
+
+  const sorted = [...rows].sort((a, b) => a.r.unit - b.r.unit);
+  const best = sorted[0];
+  let main = '', sub = '';
+
+  if (sorted.length === 1) {
+    main = `${best.ch.name}：平均 ${f3(best.r.unit)} 元/L，实付 ${f2(best.r.pay)} 元`;
+    sub = `较原价每升${best.r.savePerL >= 0 ? '省' : '多付'} ${Math.abs(best.r.savePerL).toFixed(3)} 元`;
+  } else {
+    const second = sorted[1];
+    main = `${best.ch.name} 最低，平均 ${f3(best.r.unit)} 元/L，实付 ${f2(best.r.pay)} 元`;
+    const sameLiters = sorted.every(x => Math.abs(x.r.liters - best.r.liters) < 0.006);
+    if (sameLiters) {
+      const diff = r2(second.r.pay - best.r.pay);
+      sub = diff > 0
+        ? `同样加 ${f2(best.r.amount)} 元油（${f2(best.r.liters)} L），比 ${second.ch.name} 少付 ${f2(diff)} 元`
+        : `与 ${second.ch.name} 实付持平`;
+    } else {
+      sub = `各渠道加油金额不同，按每升实付比较；次优 ${second.ch.name} ${f3(second.r.unit)} 元/L`;
+    }
+  }
+
+  box.innerHTML = `<div class="main">${esc(main)}</div>` + (sub ? `<div class="sub">${esc(sub)}</div>` : '');
+}
+
+/* ===== 基础面板 ===== */
+function syncBase() {
+  document.getElementById('price').value = state.price;
+  document.getElementById('amount').value = state.amount;
+}
+
+function bindBase() {
+  const priceInput = document.getElementById('price');
+  priceInput.addEventListener('input', () => {
+    state.price = num(priceInput.value);
+    save();
+    refresh();
+  });
+
+  const amountInput = document.getElementById('amount');
+  amountInput.addEventListener('input', () => {
+    state.amount = num(amountInput.value);
+    save();
+    refresh();
+  });
+
+  const chips = document.getElementById('chips');
+  [200, 300, 400, 500].forEach(v => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.textContent = v + ' 元';
+    b.addEventListener('click', () => {
+      state.amount = v;
+      amountInput.value = v;
+      save();
+      refresh();
+    });
+    chips.appendChild(b);
+  });
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    const ch = {
+      id: uid(), name: '新渠道', mode: 'perLiter',
+      cash: 0, perLiter: 0.5, feeRate: 0, minFee: 0, amount: null
+    };
+    state.channels.push(ch);
+    focusAfterBuild = ch.id;
+    save();
+    buildAll();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (!confirm('恢复默认参数？自定义的渠道会被清空。')) return;
+    state = defaults();
+    save();
+    syncBase();
+    buildAll();
+  });
+}
+
+/* ===== 启动 ===== */
+function buildAll() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  Object.keys(cardRefs).forEach(k => delete cardRefs[k]);
+  state.channels.forEach(ch => grid.appendChild(buildCard(ch)));
+  refresh();
+  if (focusAfterBuild) {
+    const el = cardRefs[focusAfterBuild];
+    if (el) { el.nameInput.focus(); el.nameInput.select(); }
+    focusAfterBuild = null;
+  }
+}
+
+load();
+syncBase();
+bindBase();
+buildAll();
+</script>
+</body>
+</html>
